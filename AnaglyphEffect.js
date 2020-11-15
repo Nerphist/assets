@@ -122,7 +122,7 @@ var AnaglyphEffect = function ( renderer, width, height ) {
         ].join( "\n" )
 
     } );
-
+    
     this.stereo = _stereo
 
     var _mesh = new Mesh( new PlaneBufferGeometry( 2, 2 ), _material );
@@ -174,3 +174,5 @@ var AnaglyphEffect = function ( renderer, width, height ) {
     };
 
 };
+
+export { AnaglyphEffect };
