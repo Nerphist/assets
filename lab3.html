@@ -45,7 +45,7 @@
     const c = m;
     const d = 1;
     const o = Math.PI / 2;
-    const DEGREES_TO_RADIAN = Math.PI / 180;
+    const degreesToRadian = Math.PI / 180;
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -105,10 +105,16 @@
 
 
     const getRotationMatrix = (alpha, beta, gamma) => {
-        let [x, y, z] = [beta, gamma, alpha].map(el => el ? el * DEGREES_TO_RADIAN : 0);
+        let _x = beta ? beta * degreesToRadian : 0;
+        let _y = gamma ? gamma * degreesToRadian : 0;
+        let _z = alpha ? alpha * degreesToRadian : 0;
 
-        let [cX, cY, cZ] = [x, y, z].map(el => Math.cos(el));
-        let [sX, sY, sZ] = [x, y, z].map(el => Math.sin(el));
+        let cX = Math.cos(_x);
+        let cY = Math.cos(_y);
+        let cZ = Math.cos(_z);
+        let sX = Math.sin(_x);
+        let sY = Math.sin(_y);
+        let sZ = Math.sin(_z);
 
         let m11 = cZ * cY - sZ * sX * sY;
         let m12 = -cX * sZ;
@@ -154,7 +160,7 @@
     animate();
 
     setTimeout(() => {
-        try{
+        try {
             window.DeviceOrientationEvent.requestPermission().then((response) => {
                 if (response === 'granted') {
                     window.addEventListener("deviceorientation", updateMatrix, true);
@@ -162,7 +168,7 @@
             }).catch((error) => {
                 window.addEventListener("deviceorientation", updateMatrix, true);
             });
-        }catch{
+        } catch {
             window.addEventListener("deviceorientation", updateMatrix, true);
         }
     }, 0)
