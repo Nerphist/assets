@@ -131,7 +131,7 @@
     };
 
 
-    const updateMotionData = (event) => {
+    const updateMatrix = (event) => {
         let {alpha, beta, gamma} = event;
         let matrix = new THREE.Matrix4();
         matrix.elements = getRotationMatrix(alpha, beta, gamma);
@@ -152,17 +152,18 @@
 
 
     animate();
+
     setTimeout(() => {
         try{
             window.DeviceOrientationEvent.requestPermission().then((response) => {
                 if (response === 'granted') {
-                    window.addEventListener("deviceorientation", updateMotionData, true);
+                    window.addEventListener("deviceorientation", updateMatrix, true);
                 }
             }).catch((error) => {
-                window.addEventListener("deviceorientation", updateMotionData, true);
+                window.addEventListener("deviceorientation", updateMatrix, true);
             });
         }catch{
-            window.addEventListener("deviceorientation", updateMotionData, true);
+            window.addEventListener("deviceorientation", updateMatrix, true);
         }
     }, 0)
 
