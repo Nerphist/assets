@@ -1,0 +1,202 @@
+<html>
+<head>
+    <title>Practical assignment N2</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .menubar {
+            position:absolute;
+            width: 100%
+        }
+
+        .menu {
+            background-color: black;
+            padding: 10px;
+            margin: 25px;
+            border-radius: 2px;
+            border: 1px solid #181818;
+            float:right;
+            width: 150px;
+            color: white;
+        }
+
+        #motionPermissionButton{
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="menubar">
+    <div  class="menu">
+        <input type="range" min="0.03" max="0.1" value="0.065" step="0.001"  id="eyeSepSlider">
+        <button id="motionPermissionButton">Allow motion access</button>
+    </div>
+</div>
+<script type="module">
+    import {OrbitControls} from "https://unpkg.com/three/examples/jsm/controls/OrbitControls.js";
+    import {AnaglyphEffect} from "https://nerphist.github.io/assets/AnaglyphEffect.js";
+    import * as THREE from "https://unpkg.com/three/build/three.module.js";
+
+    const sizeRatio = 10;
+    const m = 1;
+    const r = m;
+    const c = m;
+    const d = 1;
+    const o = Math.PI / 2;
+
+
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+
+    var effect = new AnaglyphEffect(renderer, window.innerWidth, window.innerHeight);
+
+    let scene = new THREE.Scene();
+
+    let camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.5, 1000);
+
+    camera.position.z = 18;
+    camera.focalLength = 10;
+
+    let controls = new OrbitControls(camera, renderer.domElement);
+
+
+    const calculationFunc = (alpha0, alpha, t) => {
+        return Math.abs((r * (alpha0 - alpha)) + t * Math.cos(o) - c * Math.sin(d * t) * Math.sin(o))
+    };
+
+    const transformFunction = (alpha0, t0, vector) => {
+        let alpha = alpha0 * sizeRatio;
+        let t = t0 * sizeRatio - sizeRatio / 2;
+
+        vector.x = r * Math.cos(alpha) - calculationFunc(alpha0, alpha, t) * Math.sin(alpha);
+        vector.y = r * Math.sin(alpha) + calculationFunc(alpha0, alpha, t) * Math.cos(alpha);
+        vector.z = t * Math.sin(o) + c * Math.sin(d * t) * Math.cos(o);
+    };
+
+
+    let geometry = new THREE.ParametricGeometry(transformFunction, 100, 100);
+
+    let wireframe = new THREE.WireframeGeometry(geometry);
+
+    let material = new THREE.LineBasicMaterial({
+        color: 0xffffff,
+        linewidth: 2,
+        opacity: 0.7,
+        transparent: true,
+        depthTest: true,
+        side: THREE.FrontSide
+    });
+
+    let surface = new THREE.LineSegments(wireframe, material);
+
+
+    scene.add(surface);
+
+    let animate = () => {
+        requestAnimationFrame(animate);
+
+        controls.update();
+        effect.render(scene, camera);
+    };
+
+
+    const getRotationMatrix = ( alpha, beta, gamma ) => {
+        let [x, y, z] = [beta, gamma, alpha].map(el => el ? el * DEGREES_TO_RADIAN : 0)
+
+        let [cX, cY, cZ] = [x, y, z].map(el => Math.cos(el));
+        let [sX, sY, sZ] = [x, y, z].map(el => Math.sin(el));
+
+        // This code was allowed to be used by us
+        // Originally taken from shttps://w3c.github.io/deviceorientation/spec-source-orientation.html
+
+        // Prefix c means cos, s means sin
+        let m11 = cZ * cY - sZ * sX * sY;
+        let m12 = - cX * sZ;
+        let m13 = cY * sZ * sX + cZ * sY;
+
+        let m21 = cY * sZ + cZ * sX * sY;
+        let m22 = cZ * cX;
+        let m23 = sZ * sY - cZ * cY * sX;
+
+        let m31 = - cX * sY;
+        let m32 = sX;
+        let m33 = cX * cY;
+
+        // Original method returned a 3x3 matrix,
+        // but due to THREE.js requirements we needed to convert it toa 4x4 one,
+        // so we added an extra row and a column
+        return [
+            m11,    m12,    m13,    0,
+            m21,    m22,    m23,    0,
+            m31,    m32,    m33,    0,
+            0,      0,      0,      1,
+        ];
+    }
+
+
+    const updateMotionData = (event) => {
+        let {alpha, beta, gamma} = event;
+        let matrix = new THREE.Matrix4();
+        matrix.elements = getRotationMatrix(alpha, beta, gamma)
+        surface.setRotationFromMatrix(matrix);
+    }
+
+    const addMotionEventListeners = () => {
+        window.addEventListener("deviceorientation", updateMotionData, true )
+    }
+
+    const requestMotionPermission = () => {
+        if ( window.DeviceOrientationEvent !== undefined && typeof window.DeviceOrientationEvent.requestPermission === 'function' ) {
+            window.DeviceOrientationEvent.requestPermission().then( ( response ) => {
+                if ( response == 'granted' ) {
+                    addMotionEventListeners()
+                }
+            } ).catch( ( error ) => {
+                console.error( 'Unable to get DeviceOrientation API permission', error );
+            } );
+        } else {
+            addMotionEventListeners()
+        }
+    }
+
+    if ( window.DeviceOrientationEvent !== undefined && typeof window.DeviceOrientationEvent.requestPermission === 'function' ) {
+        console.log("Can request permission")
+        document.getElementById("motionPermissionButton")
+            .addEventListener("click", (event) => {
+                requestMotionPermission()
+            }, false);
+    } else {
+        console.log("Cannot request permission or it is granted without one")
+        document.getElementById("motionPermissionButton").style.display = "none";
+        requestMotionPermission()
+    }
+
+
+
+    window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        effect.setSize( window.innerWidth, window.innerHeight );
+    }, false );
+
+
+    document.getElementById("eyeSepSlider")
+        .addEventListener("input", (event) => {
+            effect.stereo.eyeSep = event.target.value;
+        });
+
+
+
+    animate();
+
+</script>
+</body>
+</html>
