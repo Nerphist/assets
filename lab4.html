@@ -104,9 +104,9 @@
 		let alpha = alpha0 * sizeRatio;
 		let t = t0 * sizeRatio - sizeRatio / 2;
 
-		vector.x = 0.0001 * r * Math.cos(alpha) - calculationFunc(alpha0, alpha, t) * Math.sin(alpha);
-		vector.y = 0.0001 * r * Math.sin(alpha) + calculationFunc(alpha0, alpha, t) * Math.cos(alpha);
-		vector.z = 0.0001 * t * Math.sin(o) + c * Math.sin(d * t) * Math.cos(o);
+		vector.x = 0.000001 * r * Math.cos(alpha) - calculationFunc(alpha0, alpha, t) * Math.sin(alpha);
+		vector.y = 0.000001 * r * Math.sin(alpha) + calculationFunc(alpha0, alpha, t) * Math.cos(alpha);
+		vector.z = 0.000001 * t * Math.sin(o) + c * Math.sin(d * t) * Math.cos(o);
 	};
 
 
