@@ -1,0 +1,163 @@
+<html>
+
+<head>
+    <!-- This is used to fix some scaling bugs -->
+    <!-- Was seen in one of the examples -->
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+    <title>Practical assignment 4</title>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .floating-bar {
+            position: absolute;
+            width: 250
+        }
+
+        .field .header {
+            margin-bottom: 5;
+            font-size: 13px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: white;
+            display: inline-block;
+        }
+
+        .field {
+            background-color: #171d22;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 25px;
+        }
+
+        .field input {
+            width: 98%;
+        }
+
+        .field select {
+            width: 100%;
+        }
+
+        .field button {
+            width: 100%
+        }
+    </style>
+    <!-- I had to import files locally due to not being able to find a CDN that had them hosted -->
+    <script src='https://nerphist.github.io/assets/three.min.js'></script>
+    <script src="https://nerphist.github.io/assets/ar.js"></script>
+</head>
+
+<body style='margin : 0; overflow: hidden; font-family: Monospace,serif;'>
+<script>
+
+    // Royalty free images were used
+    let jpg_url = 'https://nerphist.github.io/assets/texture.jpg';
+
+	const sizeRatio = 10;
+	const m = 1;
+	const r = m;
+	const c = m;
+	const d = 1;
+	const o = Math.PI / 2;
+
+    const renderer = new THREE.WebGLRenderer({alpha: true});
+    document.body.appendChild(renderer.domElement);
+
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.Camera();
+
+    scene.add(camera);
+
+    const arToolkitSource = new THREEx.ArToolkitSource({
+        sourceType: 'webcam',
+        displayWidth: window.innerWidth,
+        displayHeight: window.innerHeight
+    });
+    arToolkitSource.init(() => {
+        resize()
+    })
+
+
+    const arToolkitContext = new THREEx.ArToolkitContext({
+        cameraParametersUrl: 'https://nerphist.github.io/assets/parameters.dat', // The exact same file was hosted on the examples page
+        detectionMode: 'mono',
+        maxDetectionRate: 60,					// 60 times per second
+        canvasWidth: window.innerWidth,
+        canvasHeight: window.innerHeight
+    })
+    arToolkitContext.init(() => {
+        camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+    });
+
+
+	const calculationFunc = (alpha0, alpha, t) => {
+		return Math.abs((r * (alpha0 - alpha)) + t * Math.cos(o) - c * Math.sin(d * t) * Math.sin(o))
+	};
+
+	const transformFunction = (alpha0, t0, vector) => {
+		let alpha = alpha0 * sizeRatio;
+		let t = t0 * sizeRatio - sizeRatio / 2;
+
+		vector.x = r * Math.cos(alpha) - calculationFunc(alpha0, alpha, t) * Math.sin(alpha);
+		vector.y = r * Math.sin(alpha) + calculationFunc(alpha0, alpha, t) * Math.cos(alpha);
+		vector.z = t * Math.sin(o) + c * Math.sin(d * t) * Math.cos(o);
+	};
+
+
+    // Build the geometry with 40 u slices and 40 v slices
+    let geometry = new THREE.ParametricGeometry(transformFunction, 40, 40);
+
+
+    let markerRoot = new THREE.Group();
+    scene.add(markerRoot);
+    let markerControls = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+        type: 'pattern', patternUrl: 'https://nerphist.github.io/assets/marker.patt',
+    });
+    let texture = new THREE.TextureLoader().load(
+        jpg_url
+    );
+    material = new THREE.MeshBasicMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 1,
+        depthTest: true,
+    });
+    let object = new THREE.Mesh(geometry, material);
+    object.position.y = 0.75;
+    markerRoot.add(object);
+
+
+    function animate(currentMs) {
+        requestAnimationFrame(animate);
+        if (arToolkitSource.ready) {
+            arToolkitContext.update(arToolkitSource.domElement);
+        }
+        renderer.render(scene, camera);
+    }
+
+    function resize() {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        arToolkitSource.onResizeElement()
+        arToolkitSource.copyElementSizeTo(renderer.domElement)
+        if (arToolkitContext.arController !== null) {
+            arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas)
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        resize()
+    });
+
+    resize();
+    animate();
+
+</script>
+</body>
+</html>
