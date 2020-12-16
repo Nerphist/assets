@@ -17,11 +17,11 @@
 
         .floating-bar {
             position: absolute;
-            width: 250
+            width: 250px
         }
 
         .field .header {
-            margin-bottom: 5;
+            margin-bottom: 5px;
             font-size: 13px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             color: white;
@@ -104,9 +104,9 @@
 		let alpha = alpha0 * sizeRatio;
 		let t = t0 * sizeRatio - sizeRatio / 2;
 
-		vector.x = r * Math.cos(alpha) - calculationFunc(alpha0, alpha, t) * Math.sin(alpha);
-		vector.y = r * Math.sin(alpha) + calculationFunc(alpha0, alpha, t) * Math.cos(alpha);
-		vector.z = t * Math.sin(o) + c * Math.sin(d * t) * Math.cos(o);
+		vector.x = 0.001 * r * Math.cos(alpha) - calculationFunc(alpha0, alpha, t) * Math.sin(alpha);
+		vector.y = 0.001 * r * Math.sin(alpha) + calculationFunc(alpha0, alpha, t) * Math.cos(alpha);
+		vector.z = 0.001 * t * Math.sin(o) + c * Math.sin(d * t) * Math.cos(o);
 	};
 
 
